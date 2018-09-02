@@ -1,4 +1,7 @@
 'use strict';
+
+// import Customer from './Customer.model';
+import { Customer} from './Customer.model'
 const fs        = require('fs');
 const path      = require('path');
 const Sequelize = require('sequelize');
@@ -6,21 +9,16 @@ const basename  = path.basename(__filename);
 const db        = {};
 const CONFIG = require('../config/config');
 
-const sequelize = new Sequelize(CONFIG.db_name, CONFIG.db_user, CONFIG.db_password, {
+
+const dbConnection = new Sequelize(CONFIG.db_name, CONFIG.db_user, CONFIG.db_password, {
   host: CONFIG.db_host,
   dialect: CONFIG.db_dialect,
   port: CONFIG.db_port,
   operatorsAliases: false
 });
 
-fs.readdirSync(__dirname)
-  .filter((file) => {
-    return (file.indexOf('.') !== 0) && (file !== basename) && (file.slice(-3) === '.js');
-  })
-  .forEach((file) => {
-    let model = sequelize['import'](path.join(__dirname, file));
-    db[model.name] = model;
-  });
+db['CUSTOMER'] = Customer(dbConnection, Sequelize);
+
 
 Object.keys(db).forEach((modelName) => {
   if (db[modelName].associate) {
@@ -28,7 +26,18 @@ Object.keys(db).forEach((modelName) => {
   }
 });
 
-db.sequelize = sequelize;
+const authDbConnection = ()=> {
+
+    dbConnection.authenticate().then(() => {
+        console.log('Connected to SQL database:', CONFIG.db_name);
+    })
+        .catch(err => {
+            console.error('Unable to connect to SQL database:',CONFIG.db_name, err);
+        });
+};
+db.dbConnection = dbConnection;
 db.Sequelize = Sequelize;
+db.authDbConnection = authDbConnection;
 
 module.exports = db;
+
